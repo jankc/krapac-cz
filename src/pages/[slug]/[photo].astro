@@ -1,0 +1,92 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getGalleryBySlug, getSortedGalleries, type GalleryDetail } from '../../lib/galleries';
+
+export async function getStaticPaths() {
+  const galleries = await getSortedGalleries();
+  const paths = [];
+
+  for (const item of galleries) {
+    const gallery = await getGalleryBySlug(item.slug);
+    if (!gallery) continue;
+
+    gallery.images.forEach((_, index) => {
+      paths.push({
+        params: { slug: item.slug, photo: String(index + 1) },
+        props: { gallery, index },
+      });
+    });
+  }
+
+  return paths;
+}
+
+interface Props {
+  gallery: GalleryDetail;
+  index: number;
+}
+
+const { gallery, index } = Astro.props;
+const image = gallery.images[index];
+const total = gallery.images.length;
+const pad = (n: number) => String(n).padStart(2, '0');
+
+const prevHref = index > 0 ? `/${gallery.slug}/${index}/` : undefined;
+const nextHref = index < total - 1 ? `/${gallery.slug}/${index + 2}/` : undefined;
+---
+
+<BaseLayout
+  title={`${gallery.title} ${pad(index + 1)} | Jan Krapac Photography`}
+  description={gallery.description}
+  image={image.src}
+>
+  <main class="photo-page">
+    <nav class="photo-nav">
+      <a class="back" href={`/${gallery.slug}/`} data-back>← {gallery.title}</a>
+      <span class="photo-counter">{pad(index + 1)} / {pad(total)}</span>
+      <span></span>
+    </nav>
+    <div class="photo-stage">
+      {
+        prevHref && (
+          <a class="photo-side photo-side-prev" href={prevHref} rel="prev" aria-label="Předchozí fotografie">
+            ←
+          </a>
+        )
+      }
+      <Image
+        src={image}
+        alt={`${gallery.title} ${index + 1}`}
+        formats={['webp']}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+      {
+        nextHref && (
+          <a class="photo-side photo-side-next" href={nextHref} rel="next" aria-label="Další fotografie">
+            →
+          </a>
+        )
+      }
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  document.addEventListener('keydown', event => {
+    if (event.metaKey || event.ctrlKey || event.altKey) return;
+    const target =
+      event.key === 'ArrowLeft'
+        ? 'a[rel="prev"]'
+        : event.key === 'ArrowRight'
+          ? 'a[rel="next"]'
+          : event.key === 'Escape'
+            ? '[data-back]'
+            : null;
+    if (!target) return;
+    const link = document.querySelector<HTMLAnchorElement>(target);
+    if (link) window.location.href = link.href;
+  });
+</script>

@@ -3,10 +3,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="404 | Jan Krapac Photography" noindex>
-  <div id="main">
-    <section id="one">
-      <h1>Not Found</h1>
-      <p>You just hit a route that does not exist.</p>
-    </section>
-  </div>
+  <main class="notfound">
+    <p class="index-num">404</p>
+    <h1 class="gallery-title display">Stránka nenalezena</h1>
+    <a class="back" href="/">← Index</a>
+  </main>
 </BaseLayout>

@@ -1,7 +1,6 @@
 ---
 import { Image } from 'astro:assets';
 import { render } from 'astro:content';
-import GalleryLightbox from '../components/GalleryLightbox';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getGalleryBySlug, getSortedGalleries } from '../lib/galleries';
 
@@ -26,16 +25,15 @@ if (!gallery) {
 }
 
 const { Content } = await render(gallery.entry);
+const hasText = Boolean(gallery.entry.body?.trim());
 
-const imageColumns = gallery.images.reduce(
-  (columns, image, index) => {
-    columns[index % 2].push({ image, index });
-    return columns;
-  },
-  [[], []] as Array<Array<{ image: (typeof gallery.images)[number]; index: number }>>
-);
+const galleries = await getSortedGalleries();
+const currentIndex = galleries.findIndex(item => item.slug === slug);
+const nextGallery = galleries[(currentIndex + 1) % galleries.length];
 
-const galleryImageSources = gallery.images.map(image => image.src);
+const total = gallery.images.length;
+const pad = (n: number) => String(n).padStart(2, '0');
+const photoWord = total === 1 ? 'fotografie' : total < 5 ? 'fotografie' : 'fotografií';
 ---
 
 <BaseLayout
@@ -43,55 +41,51 @@ const galleryImageSources = gallery.images.map(image => image.src);
   description={gallery.description}
   image={gallery.featuredPhotoSrc}
 >
-  <div id="main">
-    <section id="one">
-      <h1>
-        <a href="/"><i class="back fa fa-long-arrow-left" aria-hidden="true"></i></a>
-        <span>{gallery.title}</span>
-      </h1>
-      <Content />
+  <main class="gallery">
+    <header class="gallery-head">
+      <a class="back" href="/">← Index</a>
+      <h1 class="gallery-title display">{gallery.title}</h1>
+      <p class="gallery-meta">{pad(currentIndex + 1)} — {total} {photoWord}</p>
+      {
+        hasText && (
+          <div class="gallery-text">
+            <Content />
+          </div>
+        )
+      }
+    </header>
 
-      <div class="my-masonry-grid" id="gallery-grid">
-        {
-          imageColumns.map((column, columnIndex) => (
-            <div class="my-masonry-grid_column" data-column={columnIndex}>
-              {
-                column.map(item => (
-                  <div>
-                    <a
-                      class="image fit thumb"
-                      href={item.image.src}
-                      data-gallery-index={item.index}
-                      aria-label={`Open ${gallery.title} photo ${item.index + 1}`}
-                    >
-                      <Image
-                        src={item.image}
-                        alt={`${gallery.title} ${item.index + 1}`}
-                        widths={[520, 760, 1080]}
-                        sizes="(max-width: 736px) calc(100vw - 3rem), (max-width: 980px) calc((100vw - 8rem) / 2), 520px"
-                        formats={['avif', 'webp', 'jpeg']}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </a>
-                  </div>
-                ))
-              }
-            </div>
-          ))
-        }
-      </div>
+    <div class="gallery-feed">
+      {
+        gallery.images.map((image, index) => (
+          <figure class="gallery-item">
+            <a
+              href={`/${slug}/${index + 1}/`}
+              aria-label={`Otevřít fotografii ${index + 1} z galerie ${gallery.title}`}
+            >
+              <Image
+                src={image}
+                alt={`${gallery.title} ${index + 1}`}
+                widths={[720, 1080, 1600]}
+                sizes="(max-width: 1240px) 94vw, 1160px"
+                formats={['avif', 'webp', 'jpeg']}
+                loading={index < 2 ? 'eager' : 'lazy'}
+                decoding="async"
+              />
+            </a>
+            <figcaption>
+              {pad(index + 1)} / {pad(total)}
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
 
-      <GalleryLightbox
-        client:idle
-        images={galleryImageSources}
-        title={gallery.title}
-        triggerSelector="#gallery-grid [data-gallery-index]"
-      />
-
-      <h1>
-        <a href="/"><i class="back fa fa-long-arrow-left" aria-hidden="true"></i></a>
-      </h1>
-    </section>
-  </div>
+    <nav class="gallery-next" aria-label="Další galerie">
+      <a href={`/${nextGallery.slug}/`}>
+        <span class="gallery-next-label">Další galerie</span>
+        <span class="gallery-next-title display">{nextGallery.title} →</span>
+      </a>
+    </nav>
+  </main>
 </BaseLayout>

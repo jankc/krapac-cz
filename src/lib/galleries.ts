@@ -13,6 +13,7 @@ export interface GalleryIndexItem {
   description: string;
   featuredPhoto: ImageMetadata;
   featuredPhotoSrc: string;
+  imageCount: number;
 }
 
 export interface GalleryDetail extends GalleryIndexItem {
@@ -96,6 +97,7 @@ export const getSortedGalleries = async (): Promise<GalleryIndexItem[]> => {
         description: createGalleryDescription(entry.body, entry.data.title),
         featuredPhoto,
         featuredPhotoSrc: featuredPhoto.src,
+        imageCount: getGalleryImages(slug).length,
       };
     })
     .sort((a, b) => a.order - b.order);
@@ -120,6 +122,7 @@ export const getGalleryBySlug = async (
     description: createGalleryDescription(entry.body, entry.data.title),
     featuredPhoto,
     featuredPhotoSrc: featuredPhoto.src,
+    imageCount: getGalleryImages(slug).length,
     entry,
     images: getGalleryImages(slug),
   };
