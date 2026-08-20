@@ -1,13 +1,10 @@
-import type { ImageMetadata } from 'astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
-
-const galleryImageModules = import.meta.glob(
-  [
-    '../../content/galleries/**/*.{jpg,jpeg,png,webp,gif,JPG,JPEG,PNG,WEBP,GIF}',
-    '../../content/hidden-galleries/**/*.{jpg,jpeg,png,webp,gif,JPG,JPEG,PNG,WEBP,GIF}',
-  ],
-  { eager: true, import: 'default' }
-) as Record<string, ImageMetadata>;
+import {
+  cdnUrl,
+  getPhoto,
+  listPhotoPaths,
+  type GalleryPhoto,
+} from './images';
 
 export interface GalleryIndexItem {
   slug: string;
@@ -15,7 +12,7 @@ export interface GalleryIndexItem {
   order: number;
   hidden: boolean;
   description: string;
-  featuredPhoto: ImageMetadata;
+  featuredPhoto: GalleryPhoto;
   featuredPhotoSrc: string;
   imageCount: number;
 }
@@ -25,7 +22,7 @@ type GalleryEntry =
 
 export interface GalleryDetail extends GalleryIndexItem {
   entry: GalleryEntry;
-  images: ImageMetadata[];
+  images: GalleryPhoto[];
 }
 
 const normalizeSlug = (id: string) => {
@@ -42,6 +39,11 @@ const normalizeSlug = (id: string) => {
 const entryFolder = (entry: GalleryEntry) =>
   entry.filePath ? normalizeSlug(entry.filePath) : normalizeSlug(entry.id);
 
+// Manifest keys mirror the content layout: "galleries/<folder>/<file>" and
+// "hidden-galleries/<folder>/<file>", with gallery covers at the collection root.
+const collectionDir = (hidden: boolean) =>
+  hidden ? 'hidden-galleries' : 'galleries';
+
 const fileNameFromPath = (filePath: string) => {
   const normalizedPath = filePath.replace(/\\/g, '/');
   return normalizedPath.split('/').pop() ?? normalizedPath;
@@ -52,11 +54,6 @@ const sortByFileName = (a: string, b: string) =>
     numeric: true,
     sensitivity: 'base',
   });
-
-const normalizeContentPath = (filePath: string) =>
-  filePath
-    .replace(/\\/g, '/')
-    .replace(/^.*\/content\/(?:hidden-)?galleries\//, '');
 
 const createGalleryDescription = (body: string | undefined, title: string) => {
   const safeBody = body ?? '';
@@ -76,27 +73,21 @@ const createGalleryDescription = (body: string | undefined, title: string) => {
   return plainText.slice(0, 180);
 };
 
-const getGalleryImages = (folder: string) => {
-  const imagePrefix = `${folder}/`;
+const getGalleryImages = (folder: string, hidden: boolean) => {
+  const imagePrefix = `${collectionDir(hidden)}/${folder}/`;
 
-  return Object.keys(galleryImageModules)
-    .filter((filePath) =>
-      normalizeContentPath(filePath).startsWith(imagePrefix)
-    )
+  return listPhotoPaths()
+    .filter((path) => path.startsWith(imagePrefix))
     .sort(sortByFileName)
-    .map((filePath) => galleryImageModules[filePath]);
+    .map(getPhoto);
 };
 
-const getFeaturedPhoto = (featuredPhoto: string) => {
-  const photo = Object.entries(galleryImageModules).find(([filePath]) => {
-    return normalizeContentPath(filePath) === featuredPhoto;
-  })?.[1];
-
-  if (!photo) {
+const getFeaturedPhoto = (featuredPhoto: string, hidden: boolean) => {
+  try {
+    return getPhoto(`${collectionDir(hidden)}/${featuredPhoto}`);
+  } catch {
     throw new Error(`Unable to resolve featured photo: ${featuredPhoto}`);
   }
-
-  return photo;
 };
 
 const toIndexItem = (
@@ -105,7 +96,7 @@ const toIndexItem = (
 ): GalleryIndexItem => {
   const folder = entryFolder(entry);
   const slug = entry.data.slug ?? folder;
-  const featuredPhoto = getFeaturedPhoto(entry.data.featuredPhoto);
+  const featuredPhoto = getFeaturedPhoto(entry.data.featuredPhoto, hidden);
 
   return {
     slug,
@@ -114,8 +105,8 @@ const toIndexItem = (
     hidden,
     description: createGalleryDescription(entry.body, entry.data.title),
     featuredPhoto,
-    featuredPhotoSrc: featuredPhoto.src,
-    imageCount: getGalleryImages(folder).length,
+    featuredPhotoSrc: cdnUrl(featuredPhoto, { width: 1200 }),
+    imageCount: getGalleryImages(folder, hidden).length,
   };
 };
 
@@ -129,7 +120,7 @@ const toGalleryDetail = (
   return {
     ...item,
     entry,
-    images: getGalleryImages(folder),
+    images: getGalleryImages(folder, hidden),
   };
 };
 

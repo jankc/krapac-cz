@@ -1,7 +1,8 @@
 ---
-import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import RemoteImage from '../../components/RemoteImage.astro';
 import { getAllGalleryDetails, type GalleryDetail } from '../../lib/galleries';
+import { cdnUrl } from '../../lib/images';
 
 export async function getStaticPaths() {
   const galleries = await getAllGalleryDetails();
@@ -32,7 +33,7 @@ const nextHref =
 <BaseLayout
   title={`${gallery.title} ${pad(index + 1)} | Jan Krapac Photography`}
   description={gallery.description}
-  image={image.src}
+  image={cdnUrl(image, { width: 1200 })}
   chrome={false}
   noindex={gallery.hidden}
 >
@@ -55,13 +56,13 @@ const nextHref =
           </a>
         )
       }
-      <Image
-        src={image}
+      <RemoteImage
+        photo={image}
         alt={`${gallery.title} ${index + 1}`}
-        formats={['webp']}
+        widths={[1200, 1600, 2000, 2600]}
+        sizes="100vw"
         loading="eager"
         fetchpriority="high"
-        decoding="async"
       />
       {
         nextHref && (
