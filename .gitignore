@@ -18,6 +18,9 @@ content/**/*.png
 content/**/*.webp
 content/**/*.gif
 
+# Local config
+.env
+
 # Misc
 .DS_Store
 

@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 /**
- * Syncs gallery images from content/ to the R2 bucket and maintains
+ * Syncs gallery images to the R2 bucket and maintains
  * content/images-manifest.json (the committed source of truth the site
- * builds from — the image files themselves are gitignored).
+ * builds from — the image files themselves live outside the repo).
+ *
+ * The images root is KRAPAC_IMAGES_DIR — read from the environment or a
+ * .env file at the repo root (falling back to content/ in the repo) —
+ * containing galleries/ and hidden-galleries/ mirroring R2 keys.
  *
  * Usage:
  *   npm run images:sync                 probe, upload changed files, write manifest
@@ -29,6 +33,26 @@ const UPLOAD_CONCURRENCY = 4;
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const contentDir = path.join(rootDir, 'content');
 const manifestPath = path.join(contentDir, 'images-manifest.json');
+// Minimal .env loader (KEY=value or KEY="value" lines); real env vars win.
+const loadDotEnv = async () => {
+  let source;
+  try {
+    source = await readFile(path.join(rootDir, '.env'), 'utf8');
+  } catch {
+    return;
+  }
+  for (const line of source.split('\n')) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (match && !(match[1] in process.env)) {
+      process.env[match[1]] = match[2].replace(/^["']|["']$/g, '');
+    }
+  }
+};
+await loadDotEnv();
+
+const imagesDir = process.env.KRAPAC_IMAGES_DIR
+  ? path.resolve(process.env.KRAPAC_IMAGES_DIR)
+  : contentDir;
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has('--dry-run');
@@ -57,7 +81,7 @@ const loadManifest = async () => {
 const listLocalImages = async () => {
   const keys = [];
   for (const collection of COLLECTIONS) {
-    const dir = path.join(contentDir, collection);
+    const dir = path.join(imagesDir, collection);
     let files;
     try {
       files = await readdir(dir, { recursive: true });
@@ -81,7 +105,7 @@ const uploadToR2 = (key) =>
     'put',
     `${BUCKET}/${key}`,
     '--file',
-    path.join(contentDir, key),
+    path.join(imagesDir, key),
     '--content-type',
     contentTypes[path.extname(key).toLowerCase()] ?? 'application/octet-stream',
     // Long-lived caching for edge and browsers; site URLs carry a ?v=<hash>
@@ -114,11 +138,24 @@ const runWithConcurrency = async (tasks, limit) => {
 
 const previousManifest = await loadManifest();
 const localKeys = await listLocalImages();
+
+// Guard against an unset env var or unmounted drive silently emptying the
+// manifest (which would remove every photo from the site on next deploy).
+if (localKeys.length === 0 && Object.keys(previousManifest).length > 0) {
+  console.error(
+    `No images found under ${imagesDir} but the manifest is not empty.\n` +
+      'Is KRAPAC_IMAGES_DIR set and the drive mounted? Aborting.'
+  );
+  process.exit(1);
+}
+
+console.log(`Images root: ${imagesDir}`);
+
 const manifest = {};
 const toUpload = [];
 
 for (const key of localKeys) {
-  const buffer = await readFile(path.join(contentDir, key));
+  const buffer = await readFile(path.join(imagesDir, key));
   const { width, height } = imageSize(buffer);
   const hash = createHash('sha256').update(buffer).digest('hex').slice(0, 16);
   const previous = previousManifest[key];

@@ -39,11 +39,18 @@ Cloudflare Image Transformations (`/cdn-cgi/image/...` URLs). The build only
 needs `content/images-manifest.json` (committed), which records each image's
 dimensions and content hash.
 
-Authoring workflow (unchanged on disk, images are just gitignored):
+Image files live **outside the repo**, in the directory named by
+`KRAPAC_IMAGES_DIR` — set it in a `.env` file at the repo root (copy
+`.env.example`; falls back to `content/` if unset). Inside it,
+`galleries/` and `hidden-galleries/` mirror
+the R2 key layout — same `name.jpg` cover + `name/` photo-folder structure
+as the `.md` files in `content/` expect.
 
-1. Drop photos into `content/galleries/<name>/` (or `content/hidden-galleries/`)
-   exactly as before — full-resolution exports are welcome, visitors always
-   receive resized derivatives.
+Authoring workflow:
+
+1. Drop photos into `$KRAPAC_IMAGES_DIR/galleries/<name>/` — full-resolution
+   exports are welcome, visitors always receive resized derivatives. The
+   gallery's `.md` file stays in `content/galleries/` in the repo.
 2. Run `npm run images:sync` — uploads new/changed files to R2 (needs
    `npx wrangler login` once) and updates the manifest.
 3. Commit the manifest together with the gallery `.md` changes and push.
