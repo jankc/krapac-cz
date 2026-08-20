@@ -436,5 +436,5 @@ a {
   width: auto;
   height: auto;
   max-width: 100%;
-  max-height: calc(100svh - 11rem);
+  max-height: calc(100svh - 7.5rem);
 }
