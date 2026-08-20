@@ -1,25 +1,17 @@
 ---
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getGalleryBySlug, getSortedGalleries, type GalleryDetail } from '../../lib/galleries';
+import { getAllGalleryDetails, type GalleryDetail } from '../../lib/galleries';
 
 export async function getStaticPaths() {
-  const galleries = await getSortedGalleries();
-  const paths = [];
+  const galleries = await getAllGalleryDetails();
 
-  for (const item of galleries) {
-    const gallery = await getGalleryBySlug(item.slug);
-    if (!gallery) continue;
-
-    gallery.images.forEach((_, index) => {
-      paths.push({
-        params: { slug: item.slug, photo: String(index + 1) },
-        props: { gallery, index },
-      });
-    });
-  }
-
-  return paths;
+  return galleries.flatMap((gallery) =>
+    gallery.images.map((_, index) => ({
+      params: { slug: gallery.slug, photo: String(index + 1) },
+      props: { gallery, index },
+    }))
+  );
 }
 
 interface Props {
@@ -33,7 +25,8 @@ const total = gallery.images.length;
 const pad = (n: number) => String(n).padStart(2, '0');
 
 const prevHref = index > 0 ? `/${gallery.slug}/${index}/` : undefined;
-const nextHref = index < total - 1 ? `/${gallery.slug}/${index + 2}/` : undefined;
+const nextHref =
+  index < total - 1 ? `/${gallery.slug}/${index + 2}/` : undefined;
 ---
 
 <BaseLayout
@@ -41,6 +34,7 @@ const nextHref = index < total - 1 ? `/${gallery.slug}/${index + 2}/` : undefine
   description={gallery.description}
   image={image.src}
   chrome={false}
+  noindex={gallery.hidden}
 >
   <main class="photo-page">
     <nav class="photo-nav">
@@ -51,7 +45,12 @@ const nextHref = index < total - 1 ? `/${gallery.slug}/${index + 2}/` : undefine
     <div class="photo-stage">
       {
         prevHref && (
-          <a class="photo-side photo-side-prev" href={prevHref} rel="prev" aria-label="Předchozí fotografie">
+          <a
+            class="photo-side photo-side-prev"
+            href={prevHref}
+            rel="prev"
+            aria-label="Předchozí fotografie"
+          >
             ←
           </a>
         )
@@ -66,7 +65,12 @@ const nextHref = index < total - 1 ? `/${gallery.slug}/${index + 2}/` : undefine
       />
       {
         nextHref && (
-          <a class="photo-side photo-side-next" href={nextHref} rel="next" aria-label="Další fotografie">
+          <a
+            class="photo-side photo-side-next"
+            href={nextHref}
+            rel="next"
+            aria-label="Další fotografie"
+          >
             →
           </a>
         )
@@ -76,7 +80,7 @@ const nextHref = index < total - 1 ? `/${gallery.slug}/${index + 2}/` : undefine
 </BaseLayout>
 
 <script>
-  document.addEventListener('keydown', event => {
+  document.addEventListener('keydown', (event) => {
     if (event.metaKey || event.ctrlKey || event.altKey) return;
     const target =
       event.key === 'ArrowLeft'

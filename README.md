@@ -18,6 +18,19 @@ npm run build
 npm run preview
 ```
 
+## Hidden galleries
+
+Unlisted galleries live under `content/hidden-galleries/`, in the same
+`name.md` + `name.jpg` + `name/` photo layout as `content/galleries/`.
+Frontmatter needs `title` and `featuredPhoto`; add an optional `slug` to
+decouple the public URL from the filename (no `order` — hidden galleries are
+never sorted or listed).
+
+They build at `/{slug}/` (and `/{slug}/{n}/` for each photo) exactly like an
+official gallery, but are absent from the homepage index, excluded from the
+sitemap, and served with a `noindex, nofollow` meta tag. Anyone with the
+direct link can open and share it — unlisted, not private.
+
 ## Static Hosting Cache Guidance
 
 Set cache headers at your CDN/hosting layer to keep static assets fast while avoiding stale HTML.

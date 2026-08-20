@@ -2,12 +2,16 @@
 import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getGalleryBySlug, getSortedGalleries } from '../lib/galleries';
+import {
+  getAllGalleries,
+  getGalleryBySlug,
+  getSortedGalleries,
+} from '../lib/galleries';
 
 export async function getStaticPaths() {
-  const galleries = await getSortedGalleries();
+  const galleries = await getAllGalleries();
 
-  return galleries.map(gallery => ({
+  return galleries.map((gallery) => ({
     params: { slug: gallery.slug },
   }));
 }
@@ -27,25 +31,33 @@ if (!gallery) {
 const { Content } = await render(gallery.entry);
 const hasText = Boolean(gallery.entry.body?.trim());
 
-const galleries = await getSortedGalleries();
-const currentIndex = galleries.findIndex(item => item.slug === slug);
-const nextGallery = galleries[(currentIndex + 1) % galleries.length];
+const visibleGalleries = await getSortedGalleries();
+const currentIndex = gallery.hidden
+  ? -1
+  : visibleGalleries.findIndex((item) => item.slug === slug);
+const nextGallery = gallery.hidden
+  ? undefined
+  : visibleGalleries[(currentIndex + 1) % visibleGalleries.length];
 
 const total = gallery.images.length;
 const pad = (n: number) => String(n).padStart(2, '0');
-const photoWord = total === 1 ? 'fotografie' : total < 5 ? 'fotografie' : 'fotografií';
+const photoWord =
+  total === 1 ? 'fotografie' : total < 5 ? 'fotografie' : 'fotografií';
+const positionPrefix = gallery.hidden ? '' : `${pad(currentIndex + 1)} — `;
+const galleryMeta = `${positionPrefix}${total} ${photoWord}`;
 ---
 
 <BaseLayout
   title={`${gallery.title} | Jan Krapac Photography`}
   description={gallery.description}
   image={gallery.featuredPhotoSrc}
+  noindex={gallery.hidden}
 >
   <main class="gallery">
     <header class="gallery-head">
       <a class="back" href="/">← Index</a>
       <h1 class="gallery-title display">{gallery.title}</h1>
-      <p class="gallery-meta">{pad(currentIndex + 1)} — {total} {photoWord}</p>
+      <p class="gallery-meta">{galleryMeta}</p>
       {
         hasText && (
           <div class="gallery-text">
@@ -81,11 +93,17 @@ const photoWord = total === 1 ? 'fotografie' : total < 5 ? 'fotografie' : 'fotog
       }
     </div>
 
-    <nav class="gallery-next" aria-label="Další galerie">
-      <a href={`/${nextGallery.slug}/`}>
-        <span class="gallery-next-label">Další galerie</span>
-        <span class="gallery-next-title display">{nextGallery.title} →</span>
-      </a>
-    </nav>
+    {
+      nextGallery && (
+        <nav class="gallery-next" aria-label="Další galerie">
+          <a href={`/${nextGallery.slug}/`}>
+            <span class="gallery-next-label">Další galerie</span>
+            <span class="gallery-next-title display">
+              {nextGallery.title} →
+            </span>
+          </a>
+        </nav>
+      )
+    }
   </main>
 </BaseLayout>
