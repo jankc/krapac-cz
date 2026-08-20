@@ -105,7 +105,7 @@ const toIndexItem = (
     hidden,
     description: createGalleryDescription(entry.body, entry.data.title),
     featuredPhoto,
-    featuredPhotoSrc: cdnUrl(featuredPhoto.path, { width: 1200 }),
+    featuredPhotoSrc: cdnUrl(featuredPhoto, { width: 1200 }),
     imageCount: getGalleryImages(folder, hidden).length,
   };
 };

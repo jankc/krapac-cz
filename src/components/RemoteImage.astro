@@ -33,12 +33,12 @@ const candidates = [
 
 const largest = candidates[candidates.length - 1];
 const srcset = candidates
-  .map((w) => `${cdnUrl(photo.path, { width: w })} ${w}w`)
+  .map((w) => `${cdnUrl(photo, { width: w })} ${w}w`)
   .join(', ');
 ---
 
 <img
-  src={cdnUrl(photo.path, { width: largest })}
+  src={cdnUrl(photo, { width: largest })}
   srcset={srcset}
   sizes={sizes}
   width={largest}

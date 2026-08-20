@@ -9,6 +9,7 @@
  *   npm run images:sync -- --dry-run    report what would happen, change nothing
  *   npm run images:sync -- --skip-upload  write manifest only (entries marked unsynced)
  *   npm run images:sync -- --prune      also delete R2 objects with no local file
+ *   npm run images:sync -- --force      re-upload everything (e.g. to refresh headers)
  *
  * Requires `npx wrangler login` (or CLOUDFLARE_API_TOKEN) for uploads.
  */
@@ -33,6 +34,7 @@ const args = new Set(process.argv.slice(2));
 const dryRun = args.has('--dry-run');
 const skipUpload = args.has('--skip-upload');
 const prune = args.has('--prune');
+const force = args.has('--force');
 
 const execFileAsync = promisify(execFile);
 
@@ -82,6 +84,10 @@ const uploadToR2 = (key) =>
     path.join(contentDir, key),
     '--content-type',
     contentTypes[path.extname(key).toLowerCase()] ?? 'application/octet-stream',
+    // Long-lived caching for edge and browsers; site URLs carry a ?v=<hash>
+    // version, so replaced images bust the cache despite `immutable`.
+    '--cache-control',
+    'public, max-age=31536000, immutable',
     '--remote',
   ]);
 
@@ -116,7 +122,8 @@ for (const key of localKeys) {
   const { width, height } = imageSize(buffer);
   const hash = createHash('sha256').update(buffer).digest('hex').slice(0, 16);
   const previous = previousManifest[key];
-  const synced = Boolean(previous && previous.hash === hash && previous.synced);
+  const synced =
+    !force && Boolean(previous && previous.hash === hash && previous.synced);
   manifest[key] = { width, height, hash, synced };
   if (!synced) {
     toUpload.push(key);
