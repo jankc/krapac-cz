@@ -4,8 +4,9 @@
  * content/images-manifest.json (the committed source of truth the site
  * builds from — the image files themselves live outside the repo).
  *
- * The images root is $KRAPAC_IMAGES_DIR (falling back to content/ in the
- * repo), containing galleries/ and hidden-galleries/ mirroring R2 keys.
+ * The images root is KRAPAC_IMAGES_DIR — read from the environment or a
+ * .env file at the repo root (falling back to content/ in the repo) —
+ * containing galleries/ and hidden-galleries/ mirroring R2 keys.
  *
  * Usage:
  *   npm run images:sync                 probe, upload changed files, write manifest
@@ -32,6 +33,23 @@ const UPLOAD_CONCURRENCY = 4;
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const contentDir = path.join(rootDir, 'content');
 const manifestPath = path.join(contentDir, 'images-manifest.json');
+// Minimal .env loader (KEY=value or KEY="value" lines); real env vars win.
+const loadDotEnv = async () => {
+  let source;
+  try {
+    source = await readFile(path.join(rootDir, '.env'), 'utf8');
+  } catch {
+    return;
+  }
+  for (const line of source.split('\n')) {
+    const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (match && !(match[1] in process.env)) {
+      process.env[match[1]] = match[2].replace(/^["']|["']$/g, '');
+    }
+  }
+};
+await loadDotEnv();
+
 const imagesDir = process.env.KRAPAC_IMAGES_DIR
   ? path.resolve(process.env.KRAPAC_IMAGES_DIR)
   : contentDir;

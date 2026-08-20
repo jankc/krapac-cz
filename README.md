@@ -39,9 +39,10 @@ Cloudflare Image Transformations (`/cdn-cgi/image/...` URLs). The build only
 needs `content/images-manifest.json` (committed), which records each image's
 dimensions and content hash.
 
-Image files live **outside the repo**, in the directory named by the
-`KRAPAC_IMAGES_DIR` env var (set in your shell profile; falls back to
-`content/` if unset). Inside it, `galleries/` and `hidden-galleries/` mirror
+Image files live **outside the repo**, in the directory named by
+`KRAPAC_IMAGES_DIR` — set it in a `.env` file at the repo root (copy
+`.env.example`; falls back to `content/` if unset). Inside it,
+`galleries/` and `hidden-galleries/` mirror
 the R2 key layout — same `name.jpg` cover + `name/` photo-folder structure
 as the `.md` files in `content/` expect.
 
