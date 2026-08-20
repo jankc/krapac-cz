@@ -12,28 +12,122 @@ const homeDescription = 'Photography portfolios and portrait galleries by Jan Kr
   description={homeDescription}
   image={galleries[0]?.featuredPhotoSrc}
 >
-  <div id="main">
-    <section id="one">
-      <div class="row">
-        {
-          galleries.map(gallery => (
-            <article class="6u 12u$(xsmall) work-item">
-              <a class="image fit thumb" href={`/${gallery.slug}/`} aria-label={`Open ${gallery.title} gallery`}>
+  <main class="index">
+    <p class="index-label">Index — {galleries.length} galerií</p>
+    <ol class="index-list">
+      {
+        galleries.map((gallery, i) => (
+          <li class="index-row" style={`--i: ${i}`}>
+            <a
+              class="index-link"
+              href={`/${gallery.slug}/`}
+              data-preview={gallery.slug}
+              aria-label={`Otevřít galerii ${gallery.title}`}
+            >
+              <span class="index-num">{String(i + 1).padStart(2, '0')}</span>
+              <span class="index-title display">{gallery.title}</span>
+              <span class="index-count">{gallery.imageCount}</span>
+              <span class="index-thumb">
                 <Image
                   src={gallery.featuredPhoto}
-                  alt={gallery.title}
-                  widths={[420, 620, 860]}
-                  sizes="(max-width: 480px) calc(100vw - 3rem), (max-width: 980px) calc(50vw - 4rem), 420px"
+                  alt=""
+                  widths={[128, 256]}
+                  sizes="64px"
                   formats={['avif', 'webp', 'jpeg']}
                   loading="lazy"
                   decoding="async"
                 />
-              </a>
-              <h2>{gallery.title}</h2>
-            </article>
-          ))
-        }
-      </div>
-    </section>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </main>
+
+  <div class="preview-layer" id="preview-layer" aria-hidden="true">
+    {
+      galleries.map(gallery => (
+        <div class="preview-item" data-preview-for={gallery.slug}>
+          <Image
+            src={gallery.featuredPhoto}
+            alt=""
+            widths={[420, 640, 840]}
+            sizes="min(27vw, 420px)"
+            formats={['avif', 'webp', 'jpeg']}
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      ))
+    }
   </div>
 </BaseLayout>
+
+<script>
+  const layer = document.getElementById('preview-layer');
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (layer && canHover) {
+    const items = new Map(
+      Array.from(layer.querySelectorAll<HTMLElement>('[data-preview-for]')).map(
+        el => [el.dataset.previewFor, el]
+      )
+    );
+
+    let targetX = 0;
+    let targetY = 0;
+    let x = 0;
+    let y = 0;
+    let rafId: number | null = null;
+    let hovering = false;
+
+    const tick = () => {
+      x += (targetX - x) * 0.16;
+      y += (targetY - y) * 0.16;
+      layer.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+
+      if (hovering || Math.abs(targetX - x) > 0.5 || Math.abs(targetY - y) > 0.5) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        rafId = null;
+      }
+    };
+
+    const start = () => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    document.querySelectorAll<HTMLAnchorElement>('.index-link').forEach(link => {
+      const key = link.dataset.preview;
+
+      link.addEventListener('pointerenter', event => {
+        hovering = true;
+        targetX = event.clientX;
+        targetY = event.clientY;
+        // snap on first entry so the preview doesn't fly in from a corner
+        if (!layer.classList.contains('is-active')) {
+          x = targetX;
+          y = targetY;
+        }
+        layer.classList.add('is-active');
+        items.forEach((el, k) => el.classList.toggle('is-visible', k === key));
+        start();
+      });
+
+      link.addEventListener('pointermove', event => {
+        targetX = event.clientX;
+        targetY = event.clientY;
+        start();
+      });
+
+      link.addEventListener('pointerleave', () => {
+        hovering = false;
+        layer.classList.remove('is-active');
+        items.forEach(el => el.classList.remove('is-visible'));
+      });
+    });
+  }
+</script>
