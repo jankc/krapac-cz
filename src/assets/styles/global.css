@@ -1,25 +1,21 @@
 /* ------------------------------------------------------------------
    krapac.cz — typographic index
-   paper + ink, one accent; Archivo Expanded / Fragment Mono / Newsreader
+   neutral paper + ink, cobalt titles; Archivo Expanded / Fragment Mono / Newsreader
 ------------------------------------------------------------------- */
 
 :root {
-  --paper: #f5f3ee;
-  --ink: #17150f;
-  --muted: #837f72;
-  --hair: #d8d3c6;
-  --accent: #cf3b12;
+  --paper: #fafafa;
+  --ink: #111111;
+  --muted: #8a8a8a;
+  --hair: #dddddd;
+  --accent: #0f2fd8;
+  --title: #0f2fd8;
 
   --font-display: 'Archivo', 'Helvetica Neue', sans-serif;
   --font-mono: 'Fragment Mono', 'SFMono-Regular', Menlo, monospace;
   --font-serif: 'Newsreader', Georgia, serif;
 
   --pad: clamp(1.1rem, 3vw, 2.25rem);
-
-  --yarl__color_backdrop: rgba(245, 243, 238, 0.97);
-  --yarl__color_button: rgba(23, 21, 15, 0.85);
-  --yarl__color_button_active: #17150f;
-  --yarl__color_button_disabled: rgba(23, 21, 15, 0.3);
 }
 
 /* --- reset (skel is gone) --- */
@@ -69,6 +65,7 @@ a {
 }
 
 .display {
+  color: var(--title);
   font-family: var(--font-display);
   font-stretch: 125%;
   font-weight: 500;
@@ -383,7 +380,7 @@ a {
 
 .gallery-next a:hover .gallery-next-title {
   transform: translateX(0.3em);
-  color: var(--accent);
+  color: var(--ink);
 }
 
 /* --- 404 --- */
