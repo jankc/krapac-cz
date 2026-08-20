@@ -142,8 +142,7 @@ a {
 
 .index-link {
   display: grid;
-  /* num | title | count | thumb (thumb column collapses on pointer devices) */
-  grid-template-columns: 3.5ch 1fr auto auto;
+  grid-template-columns: 3.5ch 1fr auto;
   align-items: center;
   gap: clamp(0.75rem, 2.5vw, 2rem);
   padding: clamp(0.9rem, 2.2vh, 1.5rem) 0;
@@ -178,19 +177,6 @@ a {
 .index-link:hover .index-num,
 .index-link:hover .index-count {
   color: var(--accent);
-}
-
-/* small inline thumbnails — touch devices only */
-.index-thumb {
-  width: 64px;
-  aspect-ratio: 1;
-  overflow: hidden;
-}
-
-.index-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 /* --- floating preview (pointer devices only) --- */
@@ -232,14 +218,6 @@ a {
 @media (hover: hover) and (pointer: fine) {
   .preview-layer {
     display: block;
-  }
-
-  .index-thumb {
-    display: none;
-  }
-
-  .index-link {
-    grid-template-columns: 3.5ch 1fr auto;
   }
 }
 

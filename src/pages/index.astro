@@ -27,17 +27,6 @@ const homeDescription = 'Photography portfolios and portrait galleries by Jan Kr
               <span class="index-num">{String(i + 1).padStart(2, '0')}</span>
               <span class="index-title display">{gallery.title}</span>
               <span class="index-count">{gallery.imageCount}</span>
-              <span class="index-thumb">
-                <Image
-                  src={gallery.featuredPhoto}
-                  alt=""
-                  widths={[128, 256]}
-                  sizes="64px"
-                  formats={['avif', 'webp', 'jpeg']}
-                  loading="lazy"
-                  decoding="async"
-                />
-              </span>
             </a>
           </li>
         ))
