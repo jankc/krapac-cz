@@ -1,6 +1,6 @@
 ---
-import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import RemoteImage from '../components/RemoteImage.astro';
 import { getSortedGalleries } from '../lib/galleries';
 
 const galleries = await getSortedGalleries();
@@ -38,14 +38,12 @@ const homeDescription = 'Photography portfolios and portrait galleries by Jan Kr
     {
       galleries.map(gallery => (
         <div class="preview-item" data-preview-for={gallery.slug}>
-          <Image
-            src={gallery.featuredPhoto}
+          <RemoteImage
+            photo={gallery.featuredPhoto}
             alt=""
             widths={[420, 640, 840]}
             sizes="min(27vw, 420px)"
-            formats={['avif', 'webp', 'jpeg']}
             loading="lazy"
-            decoding="async"
           />
         </div>
       ))

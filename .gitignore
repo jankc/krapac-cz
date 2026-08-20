@@ -11,6 +11,13 @@ dist
 public
 .cache
 
+# Gallery images live in R2 (npm run images:sync); only images-manifest.json is committed
+content/**/*.jpg
+content/**/*.jpeg
+content/**/*.png
+content/**/*.webp
+content/**/*.gif
+
 # Misc
 .DS_Store
 

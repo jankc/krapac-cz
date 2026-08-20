@@ -1,6 +1,6 @@
 ---
-import { Image } from 'astro:assets';
 import { render } from 'astro:content';
+import RemoteImage from '../components/RemoteImage.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import {
   getAllGalleries,
@@ -75,14 +75,12 @@ const galleryMeta = `${positionPrefix}${total} ${photoWord}`;
               href={`/${slug}/${index + 1}/`}
               aria-label={`Otevřít fotografii ${index + 1} z galerie ${gallery.title}`}
             >
-              <Image
-                src={image}
+              <RemoteImage
+                photo={image}
                 alt={`${gallery.title} ${index + 1}`}
-                widths={[720, 1080, 1600]}
+                widths={[720, 1080, 1600, 2320]}
                 sizes="(max-width: 1240px) 94vw, 1160px"
-                formats={['avif', 'webp', 'jpeg']}
                 loading={index < 2 ? 'eager' : 'lazy'}
-                decoding="async"
               />
             </a>
             <figcaption>

@@ -1,0 +1,50 @@
+---
+import { cdnUrl, type GalleryPhoto } from '../lib/images';
+
+interface Props {
+  photo: GalleryPhoto;
+  alt: string;
+  widths: number[];
+  sizes: string;
+  loading?: 'eager' | 'lazy';
+  decoding?: 'async' | 'sync' | 'auto';
+  fetchpriority?: 'high' | 'low' | 'auto';
+}
+
+const {
+  photo,
+  alt,
+  widths,
+  sizes,
+  loading = 'lazy',
+  decoding = 'async',
+  fetchpriority,
+} = Astro.props;
+
+// Cap srcset candidates at the original's width — Cloudflare won't upscale
+// (fit=scale-down), so anything larger would just duplicate the original.
+const candidates = [
+  ...new Set(
+    widths
+      .filter((w) => w < photo.width)
+      .concat(Math.min(Math.max(...widths), photo.width))
+  ),
+].sort((a, b) => a - b);
+
+const largest = candidates[candidates.length - 1];
+const srcset = candidates
+  .map((w) => `${cdnUrl(photo.path, { width: w })} ${w}w`)
+  .join(', ');
+---
+
+<img
+  src={cdnUrl(photo.path, { width: largest })}
+  srcset={srcset}
+  sizes={sizes}
+  width={largest}
+  height={Math.round((largest * photo.height) / photo.width)}
+  alt={alt}
+  loading={loading}
+  decoding={decoding}
+  fetchpriority={fetchpriority}
+/>
