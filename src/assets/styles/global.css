@@ -263,12 +263,17 @@ a {
   margin-top: 1.4rem;
 }
 
+.gallery-head .gallery-title {
+  text-align: center;
+}
+
 .gallery-meta {
   color: var(--muted);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-top: 1rem;
+  text-align: center;
 }
 
 .gallery-text {
@@ -277,6 +282,9 @@ a {
   line-height: 1.55;
   max-width: 36em;
   margin-top: clamp(2rem, 5vh, 3.5rem);
+  margin-inline: auto;
+  text-align: justify;
+  text-align-last: center;
 }
 
 .gallery-text p + p {
