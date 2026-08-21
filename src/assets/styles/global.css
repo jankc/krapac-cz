@@ -277,10 +277,9 @@ a {
   line-height: 1.55;
   max-width: 36em;
   margin-top: clamp(2rem, 5vh, 3.5rem);
-  margin-inline-start: auto;
-  margin-inline-end: max(0px, calc((100% - 1160px) / 2));
+  margin-inline: auto 0;
   text-align: justify;
-  text-align-last: right;
+  text-align-last: left;
 }
 
 .gallery-text p + p {
